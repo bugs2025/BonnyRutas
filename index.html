@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BonnyRapid</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            height: 100vh;
+            background: linear-gradient(135deg, #3498db, #2c3e50);
+            color: #2c3e50;
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+            touch-action: manipulation;
+        }
+        
+        /* Header fijo para móviles */
+        header {
+            background-color: rgba(255, 255, 255, 0.98);
+            padding: 12px 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50px;
+        }
+        
+        .logo {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #ff7700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        /* Contenedor principal */
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            padding-top: 50px; /* Compensar header fijo */
+        }
+        
+        /* Panel lateral */
+        .sidebar {
+            background-color: rgba(255, 255, 255, 0.98);
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 90;
+            overflow-y: auto;
+            max-height: 45vh;
+        }
+        
+        .control-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+        
+        h2 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 1rem;
+        }
+        
+        .search-box {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        
+        input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px 0 0 8px;
+            font-size: 16px;
+            background: white;
+            color: #2c3e50;
+            -webkit-appearance: none;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        
+        .search-button {
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 0 8px 8px 0;
+            padding: 0 12px;
+            cursor: pointer;
+        }
+        
+        .button-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+            justify-content: space-between;
+        }
+        
+        .button-small {
+            padding: 10px 8px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            flex: 1;
+            min-height: 44px; /* Tamaño mínimo para touch */
+        }
+        
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+        
+        .btn-primary:active {
+            background: #2980b9;
+            transform: scale(0.98);
+        }
+        
+        .btn-secondary {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .btn-secondary:active {
+            background: #c0392b;
+            transform: scale(0.98);
+        }
+        
+        .instructions {
+            background: #e8f4fc;
+            padding: 10px;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+            font-size: 0.85rem;
+        }
+        
+        #instructions-text {
+            color: #2c3e50;
+            line-height: 1.4;
+        }
+        
+        .route-info {
+            background: white;
+            padding: 12px;
+            border-radius: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+        
+        #route-details {
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+        
+        .cost-calculation {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+        
+        .cost-calculation h3 {
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #2c3e50;
+            font-size: 0.9rem;
+        }
+        
+        .cost-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid rgba(44, 62, 80, 0.1);
+            color: #2c3e50;
+            font-size: 0.85rem;
+        }
+        
+        .cost-total {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 2px solid #3498db;
+            font-weight: bold;
+            font-size: 1rem;
+            color: #2c3e50;
+        }
+        
+        .exchange-rate {
+            background: #e8f4fc;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+        
+        .exchange-rate h3 {
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .rate-input {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .rate-input input {
+            flex: 1;
+        }
+        
+        .update-rate-btn {
+            padding: 10px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        
+        .tarifa-info {
+            background: #e8f4fc;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 0.8rem;
+            color: #2c3e50;
+        }
+        
+        .tarifa-info h3 {
+            color: #2c3e50;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+        
+        #map-container {
+            flex: 1;
+            position: relative;
+            z-index: 1;
+        }
+        
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+        
+        /* Botón de ayuda para móviles */
+        .help-button {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #3498db;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 1000;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+        }
+        
+        .help-panel {
+            position: absolute;
+            top: 60px;
+            right: 15px;
+            background: rgba(255, 255, 255, 0.98);
+            padding: 12px;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+            z-index: 1000;
+            max-width: 280px;
+            color: #2c3e50;
+            display: none;
+        }
+        
+        .help-panel h3 {
+            margin-bottom: 8px;
+            color: #3498db;
+            font-size: 1rem;
+        }
+        
+        .help-panel p {
+            color: #7f8c8d;
+            line-height: 1.4;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
+        
+        .help-panel.active {
+            display: block;
+        }
+        
+        /* Botón flotante de WhatsApp */
+        .whatsapp-float {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: #25D366;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            z-index: 1000;
+            cursor: pointer;
+        }
+        
+        .destination-info {
+            position: absolute;
+            bottom: 80px;
+            left: 15px;
+            right: 15px;
+            background: rgba(255, 255, 255, 0.98);
+            padding: 12px;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+            z-index: 1000;
+            color: #2c3e50;
+            display: none;
+        }
+        
+        .destination-info h3 {
+            color: #3498db;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #3498db;
+            padding-bottom: 5px;
+            font-size: 1rem;
+        }
+        
+        .destination-info p {
+            margin: 6px 0;
+            color: #2c3e50;
+            font-size: 0.9rem;
+        }
+        
+        .destination-info .highlight {
+            color: #3498db;
+            font-weight: bold;
+        }
+        
+        /* Para dispositivos muy pequeños */
+        @media (max-width: 360px) {
+            .button-small {
+                font-size: 0.75rem;
+                padding: 8px 5px;
+            }
+            
+            .logo {
+                font-size: 1.1rem;
+            }
+        }
+        
+        /* Estilos para modo landscape */
+        @media (max-height: 500px) and (orientation: landscape) {
+            .sidebar {
+                max-height: 35vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <i class="fas fa-route"></i>
+            <span>BonnyRapid</span>
+        </div>
+    </header>
+    
+    <div class="app-container">
+        <div class="sidebar">
+            <div class="control-section">
+                <h2><i class="fas fa-search"></i> Buscar Destino</h2>
+                <div class="search-box">
+                    <input type="text" id="destination" placeholder="Escribe una dirección...">
+                    <button class="search-button" id="search-btn">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+                
+                <h2><i class="fas fa-map-marker-alt"></i> Controles</h2>
+                <div class="button-row">
+                    <button class="button-small btn-primary" id="set-start">
+                        <i class="fas fa-play-circle"></i> Inicio
+                    </button>
+                    <button class="button-small btn-primary" id="set-end">
+                        <i class="fas fa-flag-checkered"></i> Destino
+                    </button>
+                </div>
+                <div class="button-row">
+                    <button class="button-small btn-secondary" id="clear-route">
+                        <i class="fas fa-trash-alt"></i> Limpiar
+                    </button>
+                    <button class="button-small btn-primary" id="calculate-route">
+                        <i class="fas fa-calculator"></i> Calcular
+                    </button>
+                </div>
+                
+                <div class="tarifa-info">
+                    <h3><i class="fas fa-info-circle"></i> Tarifa</h3>
+                    <p>1.5$ USD por cada 3km</p>
+                    <p>Mínimo: 1.5$ USD</p>
+                </div>
+            </div>
+            
+            <div class="control-section instructions">
+                <h2><i class="fas fa-info-circle"></i> Instrucciones</h2>
+                <p id="instructions-text">Toque "Inicio" y luego el mapa para la ubicación inicial. Luego toque "Destino" y seleccione el destino.</p>
+            </div>
+            
+            <div class="control-section exchange-rate">
+                <h2><i class="fas fa-exchange-alt"></i> Tipo de Cambio</h2>
+                <p>Establezca la tasa BCV del día</p>
+                <div class="rate-input">
+                    <input type="number" id="exchange-rate-input" placeholder="Tasa BCV (Bs/$)" value="36.5" step="0.1">
+                    <button class="update-rate-btn" id="update-rate">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="control-section route-info">
+                <h2><i class="fas fa-info-circle"></i> Información de Ruta</h2>
+                <p id="route-details">Distancia: - km | Tiempo: -</p>
+                
+                <div class="cost-calculation">
+                    <h3><i class="fas fa-money-bill-wave"></i> Cálculo de Costo</h3>
+                    <div class="cost-item">
+                        <span>Distancia:</span>
+                        <span id="cost-distance">- km</span>
+                    </div>
+                    <div class="cost-item">
+                        <span>Tarifa (1.5$/3km):</span>
+                        <span id="cost-usd">- USD</span>
+                    </div>
+                    <div class="cost-item">
+                        <span>Tipo de cambio:</span>
+                        <span id="exchange-rate-display">36.5 Bs/$</span>
+                    </div>
+                    <div class="cost-total">
+                        <span>Total a pagar:</span>
+                        <span id="cost-total">- Bs</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="map-container">
+            <div id="map"></div>
+            
+            <!-- Botón de ayuda -->
+            <div class="help-button" id="help-button">
+                <i class="fas fa-question"></i>
+            </div>
+            
+            <!-- Panel de ayuda (inicialmente oculto) -->
+            <div class="help-panel" id="help-panel">
+                <h3>¿Cómo usar?</h3>
+                <p>1. Use el buscador o los botones para establecer puntos</p>
+                <p>2. Toque el mapa para colocar los marcadores</p>
+                <p>3. La ruta y el costo se calcularán automáticamente</p>
+            </div>
+            
+            <!-- Botón flotante de WhatsApp -->
+            <a class="whatsapp-float" href="https://wa.me/584124271412" target="_blank" title="Contactar por WhatsApp">
+                <i class="fab fa-whatsapp"></i>
+            </a>
+            
+            <div class="destination-info" id="destination-info">
+                <h3><i class="fas fa-info-circle"></i> Información del Destino</h3>
+                <p>Distancia: <span class="highlight" id="popup-distance">- km</span></p>
+                <p>Costo: <span class="highlight" id="popup-cost-usd">- USD</span></p>
+                <p>Total: <span class="highlight" id="popup-cost-bs">- Bs</span></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script>
+        // Inicializar variables
+        let map, startMarker, endMarker, routeLine;
+        let isSettingStart = false;
+        let isSettingEnd = false;
+        let currentDistance = 0;
+        let currentCostUSD = 0;
+        
+        // Constantes de tarifas y tipo de cambio
+        const TARIFA_POR_3KM = 1.5; // 1.5 dólares por cada 3km
+        const TARIFA_MINIMA = 1.5; // Mínimo 1.5 dólares
+        let exchangeRate = 36.5; // Bolívares por dólar (BCV) - editable
+        
+        // Coordenadas de Mérida, Venezuela
+        const MERIDA_COORDS = [8.598, -71.137];
+        
+        // Inicializar el mapa
+        function initMap() {
+            // Centrar el mapa en Mérida, Venezuela
+            map = L.map('map').setView(MERIDA_COORDS, 13);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+            
+            // Evento para hacer clic en el mapa
+            map.on('click', function(e) {
+                if (isSettingStart) {
+                    setStartPoint(e.latlng);
+                } else if (isSettingEnd) {
+                    setEndPoint(e.latlng);
+                }
+            });
+            
+            // Configurar eventos de botones - USANDO EVENTOS CLICK ESTÁNDAR
+            document.getElementById('set-start').addEventListener('click', function() {
+                isSettingStart = true;
+                isSettingEnd = false;
+                document.getElementById('instructions-text').textContent = 
+                    "Seleccione un punto en el mapa para la ubicación de inicio.";
+            });
+            
+            document.getElementById('set-end').addEventListener('click', function() {
+                isSettingEnd = true;
+                isSettingStart = false;
+                document.getElementById('instructions-text').textContent = 
+                    "Seleccione un punto en el mapa para la ubicación de destino.";
+            });
+            
+            document.getElementById('clear-route').addEventListener('click', clearRoute);
+            document.getElementById('calculate-route').addEventListener('click', calculateRoute);
+            document.getElementById('search-btn').addEventListener('click', function() {
+                const destinationInput = document.getElementById('destination');
+                searchDestination(destinationInput.value);
+            });
+            
+            document.getElementById('update-rate').addEventListener('click', function() {
+                updateExchangeRate();
+            });
+            
+            // Botón de ayuda
+            document.getElementById('help-button').addEventListener('click', function() {
+                const helpPanel = document.getElementById('help-panel');
+                helpPanel.classList.toggle('active');
+            });
+            
+            // Cerrar panel de ayuda al hacer clic fuera de él
+            document.addEventListener('click', function(e) {
+                const helpButton = document.getElementById('help-button');
+                const helpPanel = document.getElementById('help-panel');
+                
+                if (!helpButton.contains(e.target) && !helpPanel.contains(e.target)) {
+                    helpPanel.classList.remove('active');
+                }
+            });
+            
+            // Actualizar también cuando se cambia el valor con Enter
+            document.getElementById('exchange-rate-input').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    updateExchangeRate();
+                }
+            });
+            
+            // Evento para el buscador de destino
+            const destinationInput = document.getElementById('destination');
+            destinationInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchDestination(destinationInput.value);
+                }
+            });
+            
+            // Ajustar el mapa cuando se redimensiona
+            setTimeout(function() {
+                map.invalidateSize();
+            }, 100);
+        }
+        
+        // Actualizar tasa de cambio
+        function updateExchangeRate() {
+            const rateInput = document.getElementById('exchange-rate-input');
+            exchangeRate = parseFloat(rateInput.value) || 36.5;
+            document.getElementById('exchange-rate-display').textContent = exchangeRate.toFixed(2) + " Bs/$";
+            
+            // Recalcular costos si hay una ruta
+            if (currentDistance > 0) {
+                calculateCost(currentDistance);
+            }
+        }
+        
+        // Establecer punto de inicio
+        function setStartPoint(latlng) {
+            if (startMarker) {
+                map.removeLayer(startMarker);
+            }
+            
+            startMarker = L.marker(latlng, {
+                draggable: true,
+                title: "Punto de inicio",
+                icon: L.icon({
+                    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [1, -34],
+                    shadowSize: [41, 41]
+                })
+            }).addTo(map);
+            
+            startMarker.bindPopup("<b>Punto de inicio</b>").openPopup();
+            
+            isSettingStart = false;
+            document.getElementById('instructions-text').textContent = 
+                "Punto de inicio establecido. Ahora toque 'Destino' para continuar.";
+                
+            // Si ya existe un destino, calcular ruta
+            if (endMarker) {
+                calculateRoute();
+            }
+            
+            // Evento para cuando se arrastra el marcador
+            startMarker.on('dragend', function() {
+                if (endMarker) {
+                    calculateRoute();
+                }
+            });
+        }
+        
+        // Establecer punto de destino
+        function setEndPoint(latlng) {
+            if (endMarker) {
+                map.removeLayer(endMarker);
+            }
+            
+            endMarker = L.marker(latlng, {
+                draggable: true,
+                title: "Punto de destino",
+                icon: L.icon({
+                    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [1, -34],
+                    shadowSize: [41, 41]
+                })
+            }).addTo(map);
+            
+            endMarker.bindPopup("<b>Punto de destino</b>").openPopup();
+            
+            isSettingEnd = false;
+            document.getElementById('instructions-text').textContent = 
+                "Punto de destino establecido. Calculando ruta...";
+                
+            // Calcular la ruta
+            calculateRoute();
+            
+            // Evento para cuando se arrastra el marcador
+            endMarker.on('dragend', function() {
+                calculateRoute();
+            });
+            
+            // Mostrar información del destino
+            showDestinationInfo(latlng);
+        }
+        
+        // Mostrar información del destino
+        function showDestinationInfo(latlng) {
+            const destinationInfo = document.getElementById('destination-info');
+            destinationInfo.style.display = 'block';
+            
+            // Ocultar después de 10 segundos
+            setTimeout(function() {
+                destinationInfo.style.display = 'none';
+            }, 10000);
+        }
+        
+        // Buscar destino
+        function searchDestination(query) {
+            if (!query) {
+                alert("Por favor, ingrese un destino para buscar.");
+                return;
+            }
+            
+            document.getElementById('instructions-text').textContent = "Buscando destino...";
+            
+            // Usar Nominatim para geocodificación (búsqueda de direcciones)
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=ve`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.length > 0) {
+                        const result = data[0];
+                        const latlng = [parseFloat(result.lat), parseFloat(result.lon)];
+                        
+                        map.setView(latlng, 15);
+                        
+                        if (!startMarker) {
+                            // Si no hay punto de inicio, establecer el destino directamente
+                            setEndPoint(latlng);
+                        } else {
+                            // Si ya hay punto de inicio, establecer destino y calcular ruta
+                            if (endMarker) {
+                                map.removeLayer(endMarker);
+                            }
+                            setEndPoint(latlng);
+                        }
+                        
+                        document.getElementById('instructions-text').textContent = 
+                            "Destino encontrado. Ruta calculada.";
+                    } else {
+                        alert("No se encontró el destino. Intente con una dirección más específica.");
+                        document.getElementById('instructions-text').textContent = 
+                            "No se encontró el destino. Intente con una dirección más específica.";
+                    }
+                })
+                .catch(error => {
+                    console.error('Error en la búsqueda:', error);
+                    alert("Error al buscar el destino. Intente nuevamente.");
+                    document.getElementById('instructions-text').textContent = 
+                        "Error al buscar el destino. Intente nuevamente.";
+                });
+        }
+        
+        // Calcular ruta y costo
+        function calculateRoute() {
+            if (!startMarker || !endMarker) {
+                alert("Debe establecer tanto el punto de inicio como el destino.");
+                return;
+            }
+            
+            // Limpiar ruta anterior si existe
+            if (routeLine) {
+                map.removeLayer(routeLine);
+            }
+            
+            const startLatLng = startMarker.getLatLng();
+            const endLatLng = endMarker.getLatLng();
+            
+            document.getElementById('instructions-text').textContent = "Calculando ruta...";
+            
+            // Usar OSRM para calcular la ruta
+            fetch(`https://router.project-osrm.org/route/v1/driving/${startLatLng.lng},${startLatLng.lat};${endLatLng.lng},${endLatLng.lat}?overview=full&geometries=geojson`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.routes && data.routes.length > 0) {
+                        const route = data.routes[0];
+                        const routeGeometry = route.geometry;
+                        
+                        // Mostrar la ruta en el mapa
+                        routeLine = L.geoJSON(routeGeometry, {
+                            style: {
+                                color: '#3498db',
+                                weight: 5,
+                                opacity: 0.8
+                            }
+                        }).addTo(map);
+                        
+                        // Ajustar la vista del mapa para mostrar toda la ruta
+                        const bounds = routeLine.getBounds();
+                        map.fitBounds(bounds, { padding: [50, 50] });
+                        
+                        // Mostrar información de la ruta
+                        const distance = (route.distance / 1000).toFixed(1);
+                        const duration = Math.floor(route.duration / 60);
+                        
+                        document.getElementById('route-details').textContent = 
+                            `Distancia: ${distance} km | Tiempo: ${duration} min`;
+                            
+                        // Calcular y mostrar el costo
+                        calculateCost(parseFloat(distance));
+                            
+                        document.getElementById('instructions-text').textContent = 
+                            "Ruta calculada. Puede arrastrar los marcadores para ajustar la ruta.";
+                    } else {
+                        alert("No se pudo calcular la ruta. Intente con puntos diferentes.");
+                        document.getElementById('instructions-text').textContent = 
+                            "No se pudo calcular la ruta. Intente con puntos diferentes.";
+                    }
+                })
+                .catch(error => {
+                    console.error('Error al calcular la ruta:', error);
+                    alert("Error al calcular la ruta. Intente nuevamente.");
+                    document.getElementById('instructions-text').textContent = 
+                        "Error al calcular la ruta. Intente nuevamente.";
+                });
+        }
+        
+        // Calcular el costo del traslado según la tarifa de 1.5$ por cada 3km
+        function calculateCost(distance) {
+            // Guardar la distancia actual para recalcular cuando cambie la tasa
+            currentDistance = distance;
+            
+            // Calcular costo en USD (1.5$ por cada 3km, mínimo 1.5$)
+            if (distance < 3) {
+                currentCostUSD = TARIFA_MINIMA;
+            } else {
+                // Calcular múltiplos de 3km
+                currentCostUSD = Math.ceil(distance / 3) * TARIFA_POR_3KM;
+            }
+            
+            // Obtener la tasa actual
+            const rateInput = document.getElementById('exchange-rate-input');
+            exchangeRate = parseFloat(rateInput.value) || 36.5;
+            
+            // Convertir a bolívares
+            const costBS = currentCostUSD * exchangeRate;
+            
+            // Mostrar los cálculos en el panel lateral
+            document.getElementById('cost-distance').textContent = distance.toFixed(1) + " km";
+            document.getElementById('cost-usd').textContent = "$" + currentCostUSD.toFixed(2) + " USD";
+            document.getElementById('exchange-rate-display').textContent = exchangeRate.toFixed(2) + " Bs/$";
+            document.getElementById('cost-total').textContent = costBS.toFixed(2) + " Bs";
+            
+            // Mostrar los cálculos en el popup del destino
+            document.getElementById('popup-distance').textContent = distance.toFixed(1) + " km";
+            document.getElementById('popup-cost-usd').textContent = "$" + currentCostUSD.toFixed(2) + " USD";
+            document.getElementById('popup-cost-bs').textContent = costBS.toFixed(2) + " Bs";
+        }
+        
+        // Limpiar ruta
+        function clearRoute() {
+            if (startMarker) {
+                map.removeLayer(startMarker);
+                startMarker = null;
+            }
+            if (endMarker) {
+                map.removeLayer(endMarker);
+                endMarker = null;
+            }
+            if (routeLine) {
+                map.removeLayer(routeLine);
+                routeLine = null;
+            }
+            
+            document.getElementById('route-details').textContent = "Distancia: - km | Tiempo: -";
+            document.getElementById('cost-distance').textContent = "- km";
+            document.getElementById('cost-usd').textContent = "- USD";
+            document.getElementById('cost-total').textContent = "- Bs";
+            document.getElementById('instructions-text').textContent = 
+                "Toque 'Inicio' y luego seleccione un punto en el mapa para la ubicación inicial.";
+            document.getElementById('destination').value = "";
+            
+            // Ocultar información de destino
+            document.getElementById('destination-info').style.display = 'none';
+            
+            // Reiniciar valores
+            currentDistance = 0;
+            currentCostUSD = 0;
+                
+            isSettingStart = false;
+            isSettingEnd = false;
+        }
+        
+        // Inicializar el mapa cuando se cargue la página
+        window.onload = initMap;
+        
+        // Prevenir zoom con gestos de dos dedos
+        document.addEventListener('touchmove', function(event) {
+            if (event.scale !== 1) {
+                event.preventDefault();
+            }
+        }, { passive: false });
+        
+        // Ajustar el mapa cuando se cambia la orientación
+        window.addEventListener('orientationchange', function() {
+            setTimeout(function() {
+                map.invalidateSize();
+            }, 200);
+        });
+    </script>
+</body>
+</html>
